@@ -176,6 +176,22 @@
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>${jacoco.version}</version>
+                <configuration>
+                    <excludes>
+                        <!-- Excluir configuraciones -->
+                        <exclude>**/config/**</exclude>
+                        <!-- Excluir entidades JPA -->
+                        <exclude>**/entity/**</exclude>
+                        <!-- Excluir DTOs -->
+                        <exclude>**/DTO/**</exclude>
+                        <!-- Excluir mappers (interfaces y implementaciones) -->
+                        <exclude>**/mapper/**</exclude>
+                        <!-- Excluir clase principal de aplicación -->
+                        <exclude>**/*Application.class</exclude>
+                        <!-- Excluir repositorios (interfaces JPA) -->
+                        <exclude>**/repository/**</exclude>
+                    </excludes>
+                </configuration>
                 <executions>
                     <execution>
                         <id>prepare-agent</id>
@@ -203,7 +219,7 @@
                                         <limit>
                                             <counter>LINE</counter>
                                             <value>COVEREDRATIO</value>
-                                            <minimum>0.0</minimum>
+                                            <minimum>0.50</minimum>
                                         </limit>
                                     </limits>
                                 </rule>
