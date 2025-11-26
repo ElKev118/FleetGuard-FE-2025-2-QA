@@ -18,17 +18,5 @@ public class Feature1BackApplication {
 		SpringApplication.run(Feature1BackApplication.class, args);
 	}
 
-	@Bean
-	CommandLineRunner init(UsuarioRepository userRepository, PasswordEncoder passwordEncoder) {
-		return args -> {
-			if (userRepository.findByCorreo("admin").isEmpty()) {
-				Usuario admin = new Usuario();
-				admin.setCorreo("user-admin-test@yopmail.com");
-				admin.setPassword(passwordEncoder.encode("admin123")); // recuerda codificar la contraseña
-				admin.setRol(Rol.ADMIN);
-				userRepository.save(admin);
-				System.out.println("Usuario admin creado: admin / admin123");
-			}
-		};
-	}
+	
 }
