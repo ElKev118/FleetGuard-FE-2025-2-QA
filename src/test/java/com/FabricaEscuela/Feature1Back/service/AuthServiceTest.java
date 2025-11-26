@@ -24,10 +24,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
-/**
- * Pruebas unitarias para AuthService
- * Patrón AAA: Arrange (preparar), Act (actuar), Assert (verificar)
- */
+
 @ExtendWith(MockitoExtension.class)
 @DisplayName("AuthService - Pruebas Unitarias")
 class AuthServiceTest {
@@ -55,9 +52,7 @@ class AuthServiceTest {
 
     @BeforeEach
     void setUp() {
-        // Arrange común para todas las pruebas
-        // Inyectar el valor de codeExpiration (tiempo de expiración en milisegundos)
-        ReflectionTestUtils.setField(authService, "codeExpiration", 300000L); // 5 minutos
+        ReflectionTestUtils.setField(authService, "codeExpiration", 300000L);
         
         usuarioMock = new Usuario();
         usuarioMock.setId(1L);
@@ -93,6 +88,7 @@ class AuthServiceTest {
         assertEquals(6, resultado.length());
         verify(usuarioRepository, times(1)).findByCorreo(correo);
         verify(passwordEncoder, times(1)).matches(password, usuarioMock.getPassword());
+        verify(codigoVerificacionRepository, times(1)).deleteByUsuario(usuarioMock);
         verify(codigoVerificacionRepository, times(1)).save(any(CodigoVerificacion.class));
         verify(emailService, times(1)).enviarCodigoVerificacion(eq(correo), anyString());
     }
@@ -203,5 +199,24 @@ class AuthServiceTest {
 
         assertEquals("El código ha expirado", exception.getMessage());
         verify(jwtUtil, never()).generateToken(anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("Verificar código - Usuario no encontrado")
+    void testVerificarCodigo_UsuarioNoEncontrado() {
+        // Arrange
+        String correo = "noexiste@example.com";
+        String codigo = "123456";
+        
+        when(usuarioRepository.findByCorreo(correo)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            authService.verificarCodigo(correo, codigo);
+        });
+
+        assertEquals("Usuario no encontrado", exception.getMessage());
+        verify(usuarioRepository, times(1)).findByCorreo(correo);
+        verify(codigoVerificacionRepository, never()).findByCodigoAndUsuarioAndUsadoFalse(anyString(), any());
     }
 }

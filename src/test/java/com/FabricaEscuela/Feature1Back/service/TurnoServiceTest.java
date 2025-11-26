@@ -25,10 +25,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-/**
- * Pruebas unitarias para TurnoService
- * Patrón AAA: Arrange (preparar), Act (actuar), Assert (verificar)
- */
+
 @ExtendWith(MockitoExtension.class)
 @DisplayName("TurnoService - Pruebas Unitarias")
 class TurnoServiceTest {
@@ -248,5 +245,111 @@ class TurnoServiceTest {
         // Assert
         assertNotNull(resultado);
         verify(turnoRepository, times(1)).save(any(Turno.class));
+    }
+
+    @Test
+    @DisplayName("Actualizar turno - Exitoso")
+    void testActualizarTurno_Exitoso() {
+        // Arrange
+        when(turnoRepository.findById(1L)).thenReturn(Optional.of(turnoMock));
+        when(turnoRepository.save(any(Turno.class))).thenReturn(turnoMock);
+        when(turnoMapper.toDTO(turnoMock)).thenReturn(turnoDTOMock);
+
+        // Act
+        TurnoDTO resultado = turnoService.actualizarTurno(1L, crearTurnoRequest);
+
+        // Assert
+        assertNotNull(resultado);
+        verify(turnoRepository).save(turnoMock);
+    }
+
+    @Test
+    @DisplayName("Actualizar turno - No encontrado")
+    void testActualizarTurno_NoEncontrado() {
+        // Arrange
+        when(turnoRepository.findById(1L)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            turnoService.actualizarTurno(1L, crearTurnoRequest);
+        });
+        assertEquals("Turno no encontrado", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("Actualizar turno - Duración excede 8 horas")
+    void testActualizarTurno_DuracionExcede() {
+        // Arrange
+        crearTurnoRequest.setHoraFin(LocalTime.of(23, 0)); // > 8 horas
+        when(turnoRepository.findById(1L)).thenReturn(Optional.of(turnoMock));
+
+        // Act & Assert
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            turnoService.actualizarTurno(1L, crearTurnoRequest);
+        });
+        assertEquals("El turno no puede exceder las 8 horas", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("Eliminar turno - Exitoso")
+    void testEliminarTurno_Exitoso() {
+        // Arrange
+        when(turnoRepository.findById(1L)).thenReturn(Optional.of(turnoMock));
+        when(asignacionTurnoRepository.findByTurno(turnoMock)).thenReturn(new java.util.ArrayList<>());
+
+        // Act
+        turnoService.eliminarTurno(1L);
+
+        // Assert
+        verify(turnoRepository).delete(turnoMock);
+    }
+
+    @Test
+    @DisplayName("Eliminar turno - Con asignaciones activas")
+    void testEliminarTurno_ConAsignaciones() {
+        // Arrange
+        when(turnoRepository.findById(1L)).thenReturn(Optional.of(turnoMock));
+        when(asignacionTurnoRepository.findByTurno(turnoMock)).thenReturn(Arrays.asList(new AsignacionTurno()));
+
+        // Act & Assert
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            turnoService.eliminarTurno(1L);
+        });
+        assertEquals("No se puede eliminar un turno con asignaciones activas", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("Copiar semana turnos - Exitoso")
+    void testCopiarSemanaTurnos_Exitoso() {
+        // Arrange
+        when(rutaRepository.findById(1L)).thenReturn(Optional.of(rutaMock));
+        when(turnoRepository.findByRutaAndNumeroSemana(rutaMock, 1)).thenReturn(Arrays.asList(turnoMock));
+        when(turnoRepository.saveAll(anyList())).thenReturn(Arrays.asList(turnoMock));
+        when(turnoMapper.toDTO(any(Turno.class))).thenReturn(turnoDTOMock);
+
+        // Act
+        List<TurnoDTO> resultado = turnoService.copiarSemanaTurnos(1L, 1, 2);
+
+        // Assert
+        assertFalse(resultado.isEmpty());
+        verify(turnoRepository).saveAll(anyList());
+    }
+
+    @Test
+    @DisplayName("Crear turnos automáticos - Exitoso")
+    void testCrearTurnosAutomaticos_Exitoso() {
+        // Arrange
+        LocalTime inicio = LocalTime.of(6, 0);
+        LocalTime fin = LocalTime.of(22, 0);
+        when(rutaRepository.findById(1L)).thenReturn(Optional.of(rutaMock));
+        when(turnoRepository.saveAll(anyList())).thenReturn(Arrays.asList(turnoMock));
+        when(turnoMapper.toDTO(any(Turno.class))).thenReturn(turnoDTOMock);
+
+        // Act
+        List<TurnoDTO> resultado = turnoService.crearTurnosAutomaticos(1L, inicio, fin, 1);
+
+        // Assert
+        assertFalse(resultado.isEmpty());
+        verify(turnoRepository).saveAll(anyList());
     }
 }

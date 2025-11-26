@@ -20,10 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-/**
- * Pruebas unitarias para RutaService
- * Patrón AAA: Arrange (preparar), Act (actuar), Assert (verificar)
- */
+
 @ExtendWith(MockitoExtension.class)
 @DisplayName("RutaService - Pruebas Unitarias")
 class RutaServiceTest {

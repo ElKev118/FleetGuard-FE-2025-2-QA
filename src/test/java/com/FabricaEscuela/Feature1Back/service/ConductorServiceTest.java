@@ -24,10 +24,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-/**
- * Pruebas unitarias para ConductorService
- * Patrón AAA: Arrange (preparar), Act (actuar), Assert (verificar)
- */
+
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ConductorService - Pruebas Unitarias")
 class ConductorServiceTest {
@@ -172,6 +169,33 @@ class ConductorServiceTest {
     }
 
     @Test
+    @DisplayName("Crear conductor - Usuario no encontrado")
+    void testCreateConductor_UsuarioNoEncontrado() {
+        // Arrange
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            conductorService.createConductor(conductorDTOMock);
+        });
+        assertEquals("Usuario no encontrado", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("Crear conductor - Rol incorrecto")
+    void testCreateConductor_RolIncorrecto() {
+        // Arrange
+        usuarioMock.setRol(Rol.ADMIN);
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuarioMock));
+
+        // Act & Assert
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            conductorService.createConductor(conductorDTOMock);
+        });
+        assertEquals("El usuario no tiene rol CONDUCTOR", exception.getMessage());
+    }
+
+    @Test
     @DisplayName("Actualizar conductor - Conductor existente")
     void testUpdateConductor_Existente() {
         // Arrange
@@ -232,5 +256,19 @@ class ConductorServiceTest {
         // Assert
         verify(conductorRepository, times(1)).existsById(id);
         verify(conductorRepository, times(1)).deleteById(id);
+    }
+
+    @Test
+    @DisplayName("Eliminar conductor - No encontrado")
+    void testDeleteConductor_NoEncontrado() {
+        // Arrange
+        Long id = 999L;
+        when(conductorRepository.existsById(id)).thenReturn(false);
+
+        // Act & Assert
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            conductorService.deleteConductor(id);
+        });
+        assertEquals("Conductor no encontrado", exception.getMessage());
     }
 }
